@@ -1,0 +1,24 @@
+data_path: data/processed/games_sample_25000_stockfish.parquet
+split_train: train
+split_val: val
+batch_size: 8
+num_epochs: 5
+learning_rate: 0.0001
+weight_decay: 0.0001
+window_size: 128
+stride: 64
+min_window_length: 32
+hidden_dim: 256
+num_layers: 4
+num_heads: 8
+dropout: 0.1
+output_dir: experiments/run2
+loss_weights:
+  rating: 1.0
+  expected: 1.0
+  residual: 1.0
+  contrastive: 0.1
+  rating_scale: 1000.0
+  cp_scale: 100.0
+  residual_clip: 300.0
+  huber_delta: 1.0
