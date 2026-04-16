@@ -134,10 +134,15 @@ def annotate_game(row, engine, depth, skip_opening_plies, cp_loss_clip, tokenize
     }
 
 
-def compute_expected_loss_tables(df):
+def compute_expected_loss_tables(df, source_split="train"):
     records = []
+    baseline_df = df
+    if "split" in df.columns:
+        split_filtered = df[df["split"] == source_split]
+        if not split_filtered.empty:
+            baseline_df = split_filtered
 
-    for row in df.itertuples(index=False):
+    for row in baseline_df.itertuples(index=False):
         for idx, loss in enumerate(row.move_cp_loss):
             if not row.move_engine_valid[idx]:
                 continue
@@ -190,8 +195,8 @@ def attach_expected_and_residuals(df, phase_table, bucket_table):
     return df
 
 
-def write_output(df, output_path):
-    phase_table, bucket_table = compute_expected_loss_tables(df)
+def write_output(df, output_path, baseline_split="train"):
+    phase_table, bucket_table = compute_expected_loss_tables(df, source_split=baseline_split)
     enriched_df = attach_expected_and_residuals(df, phase_table, bucket_table)
     enriched_df.to_parquet(output_path, index=False)
     return enriched_df, phase_table, bucket_table
@@ -254,7 +259,11 @@ def main():
                     [partial_source_df.reset_index(drop=True), partial_annotations_df],
                     axis=1,
                 )
-                _, phase_table, bucket_table = write_output(partial_merged_df, checkpoint_path)
+                _, phase_table, bucket_table = write_output(
+                    partial_merged_df,
+                    checkpoint_path,
+                    baseline_split="train",
+                )
                 progress.set_postfix(
                     completed=completed_count,
                     phase_baselines=len(phase_table),
@@ -270,7 +279,11 @@ def main():
         axis=1,
     )
 
-    merged_df, phase_table, bucket_table = write_output(merged_df, output_path)
+    merged_df, phase_table, bucket_table = write_output(
+        merged_df,
+        output_path,
+        baseline_split="train",
+    )
     if checkpoint_path.exists():
         checkpoint_path.unlink()
 

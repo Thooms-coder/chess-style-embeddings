@@ -1,4 +1,4 @@
-data_path: data/processed/games_sample_25000_stockfish.parquet
+data_path: data/processed/games_sample_25000_stockfish_trainonly.parquet
 split_train: train
 split_val: val
 batch_size: 8

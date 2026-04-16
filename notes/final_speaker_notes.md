@@ -72,7 +72,7 @@ So the novelty is mainly in the formulation of rating-adjusted diagnosis and the
 “The current best run uses 25,000 Stockfish-annotated games.
 
 On that run:
-- validation phase-residual RMSE improved to 45.76
+- validation phase-residual RMSE improved to 47.12 on the leak-free evaluation setup
 - embedding-based neighbors match player weakness profiles better than rating-only neighbors
 - and weakness profiles are more stable over time than random baselines
 
@@ -82,7 +82,7 @@ This means the model is capturing player-specific structure beyond rating alone.
 
 “The strongest result is the ‘beyond rating alone’ evaluation.
 
-On the validation split, embedding-based nearest neighbors produced lower weakness-profile error than rating-only nearest neighbors, and embeddings beat rating in about 57% of pairwise comparisons.
+On the validation split, embedding-based nearest neighbors produced lower weakness-profile error than rating-only nearest neighbors, and embeddings beat rating in about 58% of pairwise comparisons.
 
 That is the clearest evidence that the learned representation contains behavioral structure not explained by rating alone.”
 
@@ -102,7 +102,7 @@ So the system is not just fitting noise; it is recovering some persistent player
 
 When we compare earlier predicted weakness profiles to later observed weaknesses for the same player, the effect is positive but modest.
 
-On the 25k run, short-horizon train-to-validation personalization outperformed random on both cosine similarity and RMSE, but the margin is still small.
+On the clean 25k run, short-horizon train-to-validation personalization outperformed random on both cosine similarity and RMSE, but the margin is still small.
 
 So personalized forecasting is the least mature part of the system and likely needs more annotated data.”
 
@@ -114,7 +114,7 @@ First, 25,000 annotated games is much larger than the initial prototype, but sti
 
 Second, the architecture itself is not fundamentally novel; the contribution is mainly the rating-conditioned residual framework.
 
-Third, the strongest evidence is for relative structure and stability, not for precise long-horizon personalized prediction.”
+Third, once we removed a residual-label leakage path, the headline numbers dropped slightly, but the evidence became much more scientifically credible. The strongest evidence is for relative structure and stability, not for precise long-horizon personalized prediction.”
 
 ## Slide 13 — Contribution
 

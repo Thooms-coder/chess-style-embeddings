@@ -29,7 +29,7 @@ The repository is no longer a scaffold. It supports:
 - temporal stability, embedding-quality, and personalization evaluation
 
 Current best annotated dataset:
-- [data/processed/games_sample_25000_stockfish.parquet](/Users/mutsamungoshi/Desktop/chess-style-embeddings/data/processed/games_sample_25000_stockfish.parquet)
+- [data/processed/games_sample_25000_stockfish_trainonly.parquet](/Users/mutsamungoshi/Desktop/chess-style-embeddings/data/processed/games_sample_25000_stockfish_trainonly.parquet)
 
 Current best checkpoint:
 - [experiments/run2/model.pt](/Users/mutsamungoshi/Desktop/chess-style-embeddings/experiments/run2/model.pt)
@@ -136,14 +136,20 @@ Dataset:
 - `3,527` validation windows
 
 Final validation metrics:
-- rating RMSE: `35.13`
-- expected CP RMSE: `2.58`
-- phase residual RMSE: `45.76`
+- rating RMSE: `37.53`
+- expected CP RMSE: `2.28`
+- phase residual RMSE: `47.12`
 
 Scale trend:
 - `5k` annotated games: phase residual RMSE `49.10`
 - `10k` annotated games: phase residual RMSE `47.07`
-- `25k` annotated games: phase residual RMSE `45.76`
+- `25k` annotated games: phase residual RMSE `47.12`
+
+Leak-free baseline comparison on `25k` validation:
+- `rating_heuristic`: phase residual RMSE `67.77`
+- `ridge`: phase residual RMSE `58.85`
+- `hist_gbdt`: phase residual RMSE `49.63`
+- transformer: phase residual RMSE `47.12`
 
 ### Beyond Rating Alone
 
@@ -153,9 +159,9 @@ Files:
 
 Validation result on `25k`:
 - players compared: `6528`
-- mean embedding-neighbor RMSE: `55.06`
-- mean rating-neighbor RMSE: `61.98`
-- embedding beats rating rate: `57.38%`
+- mean embedding-neighbor RMSE: `54.80`
+- mean rating-neighbor RMSE: `61.99`
+- embedding beats rating rate: `57.7%`
 
 Interpretation:
 - the learned embeddings capture phase-weakness structure better than rating-only matching
@@ -163,26 +169,26 @@ Interpretation:
 ### Temporal Stability
 
 File:
-- [experiments/run2/stability/temporal_stability_summary.parquet](/Users/mutsamungoshi/Desktop/chess-style-embeddings/experiments/run2/stability/temporal_stability_summary.parquet)
+- [experiments/run2/stability_trainonly/temporal_stability_summary.parquet](/Users/mutsamungoshi/Desktop/chess-style-embeddings/experiments/run2/stability_trainonly/temporal_stability_summary.parquet)
 
 Results on `25k`:
 - `train -> val`
   - players compared: `2068`
-  - temporal cosine: `0.2516`
-  - random cosine: `0.2036`
+  - temporal cosine: `0.2551`
+  - random cosine: `0.2043`
   - temporal RMSE: `32.08`
-  - random RMSE: `33.58`
+  - random RMSE: `33.57`
 - `val -> test`
   - players compared: `1516`
-  - temporal cosine: `0.2068`
-  - random cosine: `0.1565`
-  - temporal RMSE: `35.62`
-  - random RMSE: `36.80`
+  - temporal cosine: `0.2085`
+  - random cosine: `0.1576`
+  - temporal RMSE: `35.65`
+  - random RMSE: `36.82`
 - `train -> test`
   - players compared: `1420`
-  - temporal cosine: `0.2178`
-  - random cosine: `0.1873`
-  - temporal RMSE: `32.55`
+  - temporal cosine: `0.2191`
+  - random cosine: `0.1890`
+  - temporal RMSE: `32.57`
   - random RMSE: `34.50`
 
 Interpretation:
@@ -195,10 +201,10 @@ File:
 
 Short-horizon `train -> val` result on `25k`:
 - players compared: `2386`
-- personal cosine: `0.0802`
-- random cosine: `0.0549`
-- personal RMSE: `46.66`
-- random RMSE: `47.30`
+- personal cosine: `0.1109`
+- random cosine: `0.0702`
+- personal RMSE: `45.36`
+- random RMSE: `46.16`
 
 Interpretation:
 - future personalized weakness prediction is positive but still modest
@@ -211,7 +217,8 @@ Interpretation:
 - Phase-level aggregation made residual weakness learnable.
 - More annotated data consistently improved the phase-residual objective.
 - Embeddings now show clear evidence of capturing structure beyond rating alone.
-- Temporal stability results are positive across chronological splits on the `25k` run.
+- Temporal stability results remain positive across chronological splits on the leak-free `25k` run.
+- The transformer still beats strong tabular baselines, though the margin is narrower after fixing label leakage.
 
 ### What Did Not Work Well
 
@@ -250,7 +257,7 @@ python3 scripts/build_dataset.py \
 ```bash
 python3 scripts/run_stockfish.py \
   --input-file data/processed/games_sample_25000.parquet \
-  --output-file data/processed/games_sample_25000_stockfish.parquet \
+  --output-file data/processed/games_sample_25000_stockfish_trainonly.parquet \
   --engine-path "$(which stockfish)" \
   --depth 12 \
   --checkpoint-every 25 \
@@ -268,7 +275,7 @@ python3 src/train/trainer.py --config configs/base.yaml
 ```bash
 python3 src/eval/embed_analysis.py \
   --checkpoint experiments/run2/model.pt \
-  --data-path data/processed/games_sample_25000_stockfish.parquet \
+  --data-path data/processed/games_sample_25000_stockfish_trainonly.parquet \
   --split val \
   --output-file experiments/run2/player_embeddings_val.parquet
 ```
@@ -277,12 +284,12 @@ python3 src/eval/embed_analysis.py \
 
 ```bash
 python3 src/eval/temporal_stability.py \
-  --input-file data/processed/games_sample_25000_stockfish.parquet \
-  --output-dir experiments/run2/stability
+  --input-file data/processed/games_sample_25000_stockfish_trainonly.parquet \
+  --output-dir experiments/run2/stability_trainonly
 
 python3 src/eval/embedding_quality.py \
   --embedding-file experiments/run2/player_embeddings_val.parquet \
-  --data-path data/processed/games_sample_25000_stockfish.parquet \
+  --data-path data/processed/games_sample_25000_stockfish_trainonly.parquet \
   --split val \
   --output-dir experiments/run2/embedding_quality
 ```

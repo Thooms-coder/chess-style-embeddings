@@ -24,7 +24,7 @@ Completed pipeline:
 - fixed `128`-ply windows for training
 
 Largest current annotated dataset:
-- [data/processed/games_sample_25000_stockfish.parquet](/Users/mutsamungoshi/Desktop/chess-style-embeddings/data/processed/games_sample_25000_stockfish.parquet)
+- [data/processed/games_sample_25000_stockfish_trainonly.parquet](/Users/mutsamungoshi/Desktop/chess-style-embeddings/data/processed/games_sample_25000_stockfish_trainonly.parquet)
 
 ## Modeling
 
@@ -52,14 +52,20 @@ Dataset:
 - `3527` validation windows
 
 Final validation metrics:
-- rating RMSE: `35.13`
-- expected CP RMSE: `2.58`
-- phase residual RMSE: `45.76`
+- rating RMSE: `37.53`
+- expected CP RMSE: `2.28`
+- phase residual RMSE: `47.12`
 
 Comparison across scale:
 - `5000` games: `49.10`
 - `10000` games: `47.07`
-- `25000` games: `45.76`
+- `25000` games: `47.12`
+
+Leak-free baseline comparison on `25000` validation:
+- `rating_heuristic`: `67.77`
+- `ridge`: `58.85`
+- `hist_gbdt`: `49.63`
+- transformer: `47.12`
 
 ## Evaluation Results
 
@@ -71,9 +77,9 @@ Files:
 
 Validation result:
 - players compared: `6528`
-- mean embedding-neighbor RMSE: `55.06`
-- mean rating-neighbor RMSE: `61.98`
-- embedding beats rating rate: `57.38%`
+- mean embedding-neighbor RMSE: `54.80`
+- mean rating-neighbor RMSE: `61.99`
+- embedding beats rating rate: `57.7%`
 
 Interpretation:
 - embeddings capture player phase-weakness structure better than rating-only matching
@@ -82,26 +88,26 @@ Interpretation:
 ### 2. Temporal Residual Stability
 
 Files:
-- [temporal_stability_summary.parquet](/Users/mutsamungoshi/Desktop/chess-style-embeddings/experiments/run2/stability/temporal_stability_summary.parquet)
+- [temporal_stability_summary.parquet](/Users/mutsamungoshi/Desktop/chess-style-embeddings/experiments/run2/stability_trainonly/temporal_stability_summary.parquet)
 
 Results:
 - `train -> val`
   - players compared: `2068`
-  - temporal cosine: `0.2516`
-  - random cosine: `0.2036`
+  - temporal cosine: `0.2551`
+  - random cosine: `0.2043`
   - temporal RMSE: `32.08`
-  - random RMSE: `33.58`
+  - random RMSE: `33.57`
 - `val -> test`
   - players compared: `1516`
-  - temporal cosine: `0.2068`
-  - random cosine: `0.1565`
-  - temporal RMSE: `35.62`
-  - random RMSE: `36.80`
+  - temporal cosine: `0.2085`
+  - random cosine: `0.1576`
+  - temporal RMSE: `35.65`
+  - random RMSE: `36.82`
 - `train -> test`
   - players compared: `1420`
-  - temporal cosine: `0.2178`
-  - random cosine: `0.1873`
-  - temporal RMSE: `32.55`
+  - temporal cosine: `0.2191`
+  - random cosine: `0.1890`
+  - temporal RMSE: `32.57`
   - random RMSE: `34.50`
 
 Interpretation:
@@ -117,16 +123,14 @@ Files:
 Results:
 - `train -> val`
   - players compared: `2386`
-  - personal cosine: `0.0802`
-  - random cosine: `0.0549`
-  - personal RMSE: `46.66`
-  - random RMSE: `47.30`
-- `train -> test`
-  - not yet rerun on the `25k` checkpoint in the current summary
+  - personal cosine: `0.1109`
+  - random cosine: `0.0702`
+  - personal RMSE: `45.36`
+  - random RMSE: `46.16`
 
 Interpretation:
-- same-player future weakness is now better than random on both cosine and RMSE in the short-horizon `train -> val` setting
-- the personalization effect is still modest, but stronger than on the `10k` run
+- same-player future weakness is better than random on both cosine and RMSE in the short-horizon `train -> val` setting
+- the personalization effect is still modest, but now cleaner after fixing residual-label leakage
 
 ## Visualization Artifacts
 
@@ -147,6 +151,7 @@ Use this claim structure:
 ## Honest Limitations
 
 - dataset is now `25k` annotated games, which is much stronger than the original prototype but still small relative to the full monthly pool
+- fixing residual-label leakage reduced the headline model metrics, but made the claims substantially more defensible
 - personalization validity is positive but still not strong enough for a high-confidence deployment claim
 - evaluation is strongest for relative structure, not precise future weakness forecasting
 
